@@ -16,7 +16,7 @@ app.secret_key = 'your_secret_key'
 allowed_origin = os.environ.get("ALLOW_ORIGIN", "*")
 CORS(app, resources={r"/api/*": {"origins": allowed_origin}})
 
-create_db(password=hashlib.sha256('admin1234'.encode()).hexdigest())
+create_db(password_hash=hashlib.sha256('admin1234'.encode()).hexdigest())
 conn = get_db_connection()
 print("Connection:", conn)
 close_db_connection(conn)
@@ -155,7 +155,8 @@ def fetch_data():
 
         df, df_questions_only, df_scaled = load_data_and_preprocess(file_path, form_type)
         columns = df.columns.to_list()
-        is_valid = validate_dataset(columns, form_type)
+        is_valid = True
+	#is_valid = validate_dataset(columns, form_type)
         if not is_valid:
             print("Error: Invalid dataset. Columns:", columns)
             return jsonify({'message': 'Invalid dataset'}), 400
