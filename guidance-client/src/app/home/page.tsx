@@ -151,7 +151,7 @@ const FileUpload = ({ setData, form }: FileUploadProps) => {
             // Check if user ID is missing, redirect to login if it is
             if (!form.userId || form.userId.trim() === "") {
                 alert("User ID is required. Please log in first.");
-                window.location.href = "/login";
+                window.location.href = "/";
                 return;
             }
             
