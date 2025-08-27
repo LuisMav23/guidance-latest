@@ -15,11 +15,19 @@ DB_CONFIG = {
     'raise_on_warnings': False,
 }
 
+DB_CONFIG_LOCAL = {
+    'host': 'localhost',
+    'user': 'app',
+    'password': 'apppw',
+    'database': 'guidance_system',
+    'raise_on_warnings': False,
+}
+
 # Connection helper functions
 
-def get_db_connection(with_db=True):
+def get_db_connection(with_db=True, is_local=False):
     """Creates and returns a MySQL database connection."""
-    config = DB_CONFIG.copy()
+    config = DB_CONFIG.copy() if not is_local else DB_CONFIG_LOCAL.copy()
     if not with_db:
         config.pop('database', None)
     conn = mysql.connector.connect(**config)
@@ -32,10 +40,10 @@ def close_db_connection(connection):
     connection.close()
 
 
-def create_db(password_hash):
+def create_db(password_hash, is_local=False):
     """Creates the database (if needed) and necessary tables."""
     # Connect to MySQL server without specifying database
-    conn = get_db_connection(with_db=False)
+    conn = get_db_connection(with_db=False, is_local=is_local)
     cursor = conn.cursor()
 
     # Create database if it doesn't exist

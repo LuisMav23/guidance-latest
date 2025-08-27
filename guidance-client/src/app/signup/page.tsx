@@ -43,7 +43,7 @@ const SignUpPage: React.FC = () => {
 
         try {
             const response = await axios.post(
-                CONFIG.API_BASE_URL + "api/create_user",
+                CONFIG.API_BASE_URL + "api/users",
                 {
                     username: formData.username,
                     password: formData.password,
