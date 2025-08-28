@@ -6,3 +6,10 @@ cd guidance-client
 
 # Build Docker image
 docker build -t client .
+
+cd ..
+
+cd guidance-application
+
+# Build Docker image
+docker build -t server .

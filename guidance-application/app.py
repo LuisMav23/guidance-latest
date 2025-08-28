@@ -26,12 +26,11 @@ app.secret_key = get_env_var('SECRET_KEY', 'your_secret_key')
 allowed_origin = get_env_var("ALLOW_ORIGIN", "*")
 CORS(app, resources={r"/api/*": {"origins": allowed_origin}})
 
-@app.debug
 def setup_db():
     """Initialize the database and create superadmin if needed."""
     admin_password = get_env_var('ADMIN_PASSWORD', 'admin1234')
     password_hash = hashlib.sha256(admin_password.encode()).hexdigest()
-    create_db(password_hash=password_hash, is_local=True)
+    create_db(password_hash=password_hash)
     conn = get_db_connection()
     close_db_connection(conn)
     authenticate('superadmin', password_hash)
@@ -205,4 +204,5 @@ def download_results(type, uuid):
         abort(404, description='File not found')
 
 if __name__ == '__main__':
+    setup_db()
     app.run(host='0.0.0.0', port=5000, debug=True)

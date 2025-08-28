@@ -19,7 +19,7 @@ def validate_dataset(columns, type):
 
 def upload_file(file, id, form_type):
     stream = io.StringIO(file.stream.read().decode("UTF8"), newline=None)
-    root_save_folder = 'uploads'
+    root_save_folder = 'persisted/uploads'
     if not os.path.exists(root_save_folder):
         os.makedirs(root_save_folder)
 
@@ -38,8 +38,8 @@ def upload_file(file, id, form_type):
     return file_path
 
 def upload_student_data(df, id, form_type):
-    root_save_folder = 'student_data'
-    df_original = pd.read_csv(f'uploads/{form_type}/{id}.csv')
+    root_save_folder = 'persisted/student_data'
+    df_original = pd.read_csv(f'persisted/uploads/{form_type}/{id}.csv')
     df_original['Cluster'] = df['Cluster']
         
     if not os.path.exists(root_save_folder):
@@ -57,7 +57,7 @@ def upload_student_data(df, id, form_type):
 def upload_results(results):
     id = results['id']
     form_type = results['type']
-    root_save_folder = 'results'
+    root_save_folder = 'persisted/results'
 
     # Create root directory if it doesn't exist
     if not os.path.exists(root_save_folder):
@@ -79,7 +79,7 @@ def upload_results(results):
         return None
 
 def summarize_answers(uuid, form_type, gender, grade, cluster):
-    file_path = os.path.join('student_data', form_type, f'{uuid}.csv')
+    file_path = os.path.join('persisted','student_data', form_type, f'{uuid}.csv')
     df = pd.read_csv(file_path)
     df = df.dropna(axis=0)
 
@@ -181,7 +181,7 @@ def load_data_and_preprocess(file_path, form_type):
     df_scaled['Name'] = df['Name']
     df_scaled['Grade'] = df['Grade']
     
-    root_save_folder = 'uploads'
+    root_save_folder = 'persisted/uploads'
     if not os.path.exists(root_save_folder):
         os.makedirs(root_save_folder)
     filename = os.path.join(root_save_folder, 'full_df.csv')
@@ -242,7 +242,7 @@ def pca(df_scaled):
         return df_pca, int(optimal_pc)
 
 def get_uploaded_result_by_uuid(id, type):
-    root_save_folder = 'results'
+    root_save_folder = 'persisted/results'
     type_save_folder = os.path.join(root_save_folder, type)
     file_path = os.path.join(type_save_folder, f'{id}.json')
     
