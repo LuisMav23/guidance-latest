@@ -56,7 +56,7 @@ const SignUpPage: React.FC = () => {
             );
             console.log('User created:', response.data);
             setSuccess(true);
-            router.push('/login');
+            router.push('/');
         } catch (err: any) {
             const errorData = err.response?.data;
             setError(errorData?.message || 'Failed to create user');
@@ -151,6 +151,13 @@ const SignUpPage: React.FC = () => {
                         className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition-colors"
                     >
                         Sign Up
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => router.push('/')}
+                        className="w-full bg-transparent text-blue-500 py-2 rounded border-2 mt-3 hover:shadow-blue-600 hover:shadow-sm transition-all"
+                    >
+                        Back to Root
                     </button>
                 </form>
             </div>
