@@ -11,10 +11,17 @@ if docker ps -a --format '{{.Names}}' | grep -Eq '^server$'; then
     docker rm server
 fi
 
-# Start the client container
-docker run --name client --restart=unless-stopped -d -p 80:3000 client:latest
 docker run -d \
+  --name server \
+  --restart=unless-stopped \
+  --network guidance-net \
   -p 5000:5000 \
   -v guidance-data:/app/data \
-  --name server --restart=unless-stopped \
   server
+
+docker run -d \
+  --name client \
+  --restart=unless-stopped \
+  --network guidance-net \
+  -p 3000:3000 \
+  client:latest
