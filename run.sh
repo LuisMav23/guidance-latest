@@ -14,7 +14,7 @@ fi
 # Start the client container
 docker run --name client -d -p 80:3000 client:latest
 docker run -d \
-  -p 5001:5000 \
+  -p 5000:5000 \
   -v guidance-data:/app/data \
   --name server \
   server
