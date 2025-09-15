@@ -12,9 +12,9 @@ if docker ps -a --format '{{.Names}}' | grep -Eq '^server$'; then
 fi
 
 # Start the client container
-docker run --name client -d -p 80:3000 client:latest
+docker run --name client --restart=unless-stopped -d -p 80:3000 client:latest
 docker run -d \
   -p 5000:5000 \
   -v guidance-data:/app/data \
-  --name server \
+  --name server --restart=unless-stopped \
   server
