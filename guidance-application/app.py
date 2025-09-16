@@ -25,7 +25,7 @@ app = Flask(__name__)
 app.secret_key = get_env_var('SECRET_KEY', 'your_secret_key')
 CORS(
     app,
-    resources={r"/api/*": {"origins": ["*"]}},
+    resources={r"*": {"origins": ["*"]}},
     supports_credentials=False,
     allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
