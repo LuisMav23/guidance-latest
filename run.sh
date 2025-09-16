@@ -14,6 +14,7 @@ fi
 docker run -d \
   --name server \
   --restart=unless-stopped \
+  --network guidance-net \
   -p 5000:5000 \
   -v guidance-data:/app/data \
   server
@@ -21,6 +22,6 @@ docker run -d \
 docker run -d \
   --name client \
   --restart=unless-stopped \
-  --network='host' \
+  --network guidance-net \
   -p 3000:3000 \
   client:latest
