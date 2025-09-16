@@ -3,6 +3,7 @@ guidance-application/sql/guidance_system.db
 guidance-application/results/*
 guidance-application/uploads/*
 guidance-application/venv
+guidance-application/.env
 guidance-client/node_modules
 guidance-client/.next
 guidance-client/.env
