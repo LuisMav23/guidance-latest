@@ -23,11 +23,10 @@ def get_env_var(name, default=None):
 
 app = Flask(__name__)
 app.secret_key = get_env_var('SECRET_KEY', 'your_secret_key')
-allowed_origin = get_env_var("ALLOW_ORIGIN", "*")
 CORS(
     app,
-    resources={r"/api/*": {"origins": [allowed_origin]}},
-    supports_credentials=True,
+    resources={r"/api/*": {"origins": ["*"]}},
+    supports_credentials=False,
     allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     expose_headers=["Content-Disposition"]

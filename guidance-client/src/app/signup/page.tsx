@@ -41,6 +41,8 @@ const SignUpPage: React.FC = () => {
             return;
         }
 
+        alert(`Created user "${formData.username}"`)
+
         try {
             const response = await axios.post(
                 CONFIG.API_BASE_URL + "api/users",
@@ -58,8 +60,8 @@ const SignUpPage: React.FC = () => {
             setSuccess(true);
             router.push('/');
         } catch (err: any) {
-            const errorData = err.response?.data;
-            setError(errorData?.message || 'Failed to create user');
+            const errorData = err.response;
+            alert(errorData.message);
             return;
         }
     };
@@ -68,8 +70,6 @@ const SignUpPage: React.FC = () => {
         <div className="min-h-screen w-full flex justify-center items-center bg-gray-100 px-4 py-12">
             <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
                 <h1 className="text-3xl font-bold mb-6 text-center text-black">Sign Up</h1>
-                {error && <p className="text-red-500 mb-4">{error}</p>}
-                {success && <p className="text-green-500 mb-4">Sign up successful!</p>}
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
                         <label htmlFor="username" className="block text-gray-700 mb-2">
@@ -157,7 +157,7 @@ const SignUpPage: React.FC = () => {
                         onClick={() => router.push('/')}
                         className="w-full bg-transparent text-blue-500 py-2 rounded border-2 mt-3 hover:shadow-blue-600 hover:shadow-sm transition-all"
                     >
-                        Back to Root
+                        Back to Login
                     </button>
                 </form>
             </div>

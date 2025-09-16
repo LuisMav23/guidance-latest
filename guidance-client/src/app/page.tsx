@@ -20,9 +20,6 @@ const LoginPage: React.FC = () => {
 
     const router = useRouter();
 
-
-
-
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setError('');
@@ -43,13 +40,15 @@ const LoginPage: React.FC = () => {
                 user_type: user_data.user_type,
             }
             setUser(current_user);
+            alert("Login Successful!");
             localStorage.setItem("user", JSON.stringify(current_user));
-            console.log("user: ", user_data)
-            router.push('/home')
+            console.log("user: ", user_data);
+            router.push('/home');
         } catch (err: any) {
-            const errorData = err.response?.data;
-            setError(errorData?.message || 'Failed to login user');
+            const errorData = err.response;
+            alert(errorData);
             router.refresh();
+            console.log(err);
             return;
         }
         console.log('Username:', username, 'Password:', password);
@@ -59,8 +58,6 @@ const LoginPage: React.FC = () => {
         <div className="min-h-screen w-full flex justify-center items-center bg-gray-100 px-4">
             <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
                 <h1 className="text-3xl font-bold mb-6 text-center text-black">Log In</h1>
-                {error && <p className="text-red-500 mb-4">{error}</p>}
-                {success && <p className="text-green-500 mb-4">Login successful!</p>}
                 <form onSubmit={handleSubmit}>
                     <div className="mb-4">  
                         <label htmlFor="username" className="block text-gray-700 mb-2">
