@@ -110,6 +110,8 @@ def get_data():
 def get_data_by_uuid(type, uuid):
     """Get uploaded result by UUID and type."""
     result = get_uploaded_result_by_uuid(uuid, type)
+    if not result:
+        abort(404, description='Result not found')
     return jsonify(result), 200
 
 @app.route('/api/data/<string:uuid>', methods=['DELETE'])
