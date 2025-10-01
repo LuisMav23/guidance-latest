@@ -1,7 +1,6 @@
 function resolveApiBase() {
     // If an explicit env override is provided at build time, use it.
     if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL.replace(/\/+$/, '');
-
     // If running in the browser, build the API url using the current host so
     // requests from the user's browser go to the host that is reachable (usually localhost).
     if (typeof window !== 'undefined') {
@@ -11,7 +10,17 @@ function resolveApiBase() {
         return `${proto}//${host}:5000`;
     }
 
-    // Fallback for server-side execution (inside Docker containers) where service name may resolve.
+    // Server-side / build-time behavior:
+    // If Node is running on Linux, prefer localhost (useful when containers are run with host networking).
+    // Otherwise default to Docker service name 'server' which resolves when containers are on the same bridge network.
+    try {
+        if (process.platform === 'linux') {
+            return 'http://localhost:5000';
+        }
+    } catch (e) {
+        // ignore and fall through
+    }
+
     return 'http://server:5000';
 }
 
