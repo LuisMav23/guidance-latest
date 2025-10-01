@@ -43,7 +43,9 @@ export default function HomePage() {
     const downloadData = useCallback(async () => {
         if (!data) return;
         try {
-            const response = await axios.get(`/download/${data.type}/${data.id}`, {
+            const base = CONFIG.API_BASE_URL || '';
+            const downloadUrl = `${base}/download/${data.type}/${data.id}`;
+            const response = await axios.get(downloadUrl, {
                 responseType: 'blob',
             });
 

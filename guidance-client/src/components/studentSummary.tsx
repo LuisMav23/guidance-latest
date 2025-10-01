@@ -27,24 +27,43 @@ const StudentSummary = ({ uuid, form_type, number_of_clusters = 2 }: StudentSumm
     const [selectedCluster, setSelectedCluster] = useState<number>(0);
 
     const handleSearchSubmit = () => {
-    axios.get(`/api/student/data/${uuid}/${form_type}/${search}`, {})
-            .then((res) => {
-                setStudent(res.data);
-                setSelectedCluster(res.data.Cluster);
-                // Reset questions array before populating
-                setQuestions([]);
-                Object.keys(res.data.Questions).forEach((question) => {
-                    setQuestions((prev) => [...prev, { question: question, answer: res.data.Questions[question] }]);
-                });
-            })
-            .catch((err) => {
-                console.log(err);
-            })
+    if (!search || search.trim() === '') {
+        alert('Please enter a student name to search');
+        return;
+    }
+
+    const base = CONFIG.API_BASE_URL || '';
+    const encodedName = encodeURIComponent(search.trim());
+    const url = `${base}/api/student/data/${uuid}/${form_type}/${encodedName}`;
+
+    axios.get(url, {})
+        .then((res) => {
+            if (!res || !res.data) {
+                setStudent(null);
+                alert('Student not found');
+                return;
+            }
+            const payload = res.data;
+            setStudent(payload);
+            setSelectedCluster(Number(payload.Cluster));
+            // Reset questions array before populating
+            setQuestions([]);
+            Object.keys(payload.Questions || {}).forEach((question) => {
+                setQuestions((prev) => [...prev, { question: question, answer: payload.Questions[question] }]);
+            });
+        })
+        .catch((err) => {
+            console.log(err);
+            alert('Error fetching student data');
+        });
     }
 
     const handleClusterChange = (cluster: number) => {
         if (!student) return;
-    axios.put(`/api/student/data/${uuid}/${form_type}/${student.Name}/${cluster}`, {})
+    const base = CONFIG.API_BASE_URL || '';
+    const encodedName = encodeURIComponent(String(student.Name).trim());
+    const url = `${base}/api/student/data/${uuid}/${form_type}/${encodedName}/${cluster}`;
+    axios.put(url, {})
             .then((res) => {
                 alert("Cluster updated successfully");
                 setStudent({...student, Cluster: cluster});

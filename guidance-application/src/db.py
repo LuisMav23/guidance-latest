@@ -268,17 +268,21 @@ def get_student_data_by_uuid_and_name(uuid, name, form_type):
     try:
         df = pd.read_csv(f'student_data/{form_type}/{uuid}.csv')
         df['Name'] = df['Name'].astype(str)
-        df = df[df['Name'] == name]
-        if df.empty:
+        # Normalize comparison: strip and lower-case both sides
+        target = str(name).strip().lower()
+        df['__name_norm'] = df['Name'].astype(str).str.strip().str.lower()
+        df_match = df[df['__name_norm'] == target]
+        if df_match.empty:
             return None
+        row = df_match.iloc[0]
         return {
-            'Name': name,
-            'Grade': int(df['Grade'].iloc[0]),
-            'Gender': df['Gender'].iloc[0],
-            'Cluster': int(df['Cluster'].iloc[0]),
+            'Name': row['Name'],
+            'Grade': int(row['Grade']) if not pd.isna(row['Grade']) else None,
+            'Gender': row['Gender'],
+            'Cluster': int(row['Cluster']) if not pd.isna(row['Cluster']) else None,
             'Questions': {
-                col: int(df[col].iloc[0]) if np.issubdtype(df[col].dtype, np.integer) else df[col].iloc[0]
-                for col in df.columns if col not in ['Name', 'Grade', 'Gender', 'Cluster']
+                col: (int(row[col]) if np.issubdtype(type(row[col]), np.integer) or (isinstance(row[col], (int, np.integer))) else row[col])
+                for col in df.columns if col not in ['Name', 'Grade', 'Gender', 'Cluster', '__name_norm']
             }
         }
     except Exception as e:
@@ -290,7 +294,12 @@ def update_student_cluster(uuid, name, cluster, form_type):
     try:
         df = pd.read_csv(f'student_data/{form_type}/{uuid}.csv')
         df['Name'] = df['Name'].astype(str)
-        df.loc[df['Name'] == name, 'Cluster'] = int(cluster)
+        target = str(name).strip().lower()
+        df['__name_norm'] = df['Name'].astype(str).str.strip().str.lower()
+        df.loc[df['__name_norm'] == target, 'Cluster'] = int(cluster)
+        # Drop the helper column before saving
+        if '__name_norm' in df.columns:
+            df = df.drop(columns=['__name_norm'])
         df.to_csv(f'student_data/{form_type}/{uuid}.csv', index=False)
         return True
     except Exception as e:
