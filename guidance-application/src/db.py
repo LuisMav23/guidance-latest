@@ -266,7 +266,7 @@ def delete_record(uuid):
 
 def get_student_data_by_uuid_and_name(uuid, name, form_type):
     try:
-        df = pd.read_csv(f'student_data/{form_type}/{uuid}.csv')
+        df = pd.read_csv(os.path.join('persisted', 'student_data', form_type, f'{uuid}.csv'))
         df['Name'] = df['Name'].astype(str)
         # Normalize comparison: strip and lower-case both sides
         target = str(name).strip().lower()
@@ -281,7 +281,7 @@ def get_student_data_by_uuid_and_name(uuid, name, form_type):
             'Gender': row['Gender'],
             'Cluster': int(row['Cluster']) if not pd.isna(row['Cluster']) else None,
             'Questions': {
-                col: (int(row[col]) if np.issubdtype(type(row[col]), np.integer) or (isinstance(row[col], (int, np.integer))) else row[col])
+                col: (int(row[col]) if isinstance(row[col], (int, float)) else row[col])
                 for col in df.columns if col not in ['Name', 'Grade', 'Gender', 'Cluster', '__name_norm']
             }
         }
@@ -292,7 +292,7 @@ def get_student_data_by_uuid_and_name(uuid, name, form_type):
 
 def update_student_cluster(uuid, name, cluster, form_type):
     try:
-        df = pd.read_csv(f'student_data/{form_type}/{uuid}.csv')
+        df = pd.read_csv(os.path.join('persisted', 'student_data', form_type, f'{uuid}.csv'))
         df['Name'] = df['Name'].astype(str)
         target = str(name).strip().lower()
         df['__name_norm'] = df['Name'].astype(str).str.strip().str.lower()
@@ -300,7 +300,7 @@ def update_student_cluster(uuid, name, cluster, form_type):
         # Drop the helper column before saving
         if '__name_norm' in df.columns:
             df = df.drop(columns=['__name_norm'])
-        df.to_csv(f'student_data/{form_type}/{uuid}.csv', index=False)
+        df.to_csv(os.path.join('persisted', 'student_data', form_type, f'{uuid}.csv'), index=False)
         return True
     except Exception as e:
         print("Error:", e)
