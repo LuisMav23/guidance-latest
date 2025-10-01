@@ -43,7 +43,7 @@ export default function HomePage() {
     const downloadData = useCallback(async () => {
         if (!data) return;
         try {
-            const response = await axios.get(`${CONFIG.API_BASE_URL}/download/${data.type}/${data.id}`, {
+            const response = await axios.get(`/download/${data.type}/${data.id}`, {
                 responseType: 'blob',
             });
 
@@ -197,7 +197,7 @@ const FileUpload = ({ setData, form }: FileUploadProps) => {
                 fileName: file.name
             });
 
-            axios.post(CONFIG.API_BASE_URL + '/api/data', formData, {
+            axios.post('/api/data', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' },
             })
                 .then(response => {

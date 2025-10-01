@@ -31,9 +31,7 @@ const LoginPage: React.FC = () => {
         setIsSubmitting(true);
 
         try {
-            // Ensure URL has trailing slash if base doesn't include it
-            const url = CONFIG.API_BASE_URL.replace(/\/+$/, '') + '/api/auth';
-            const response = await axios.get(url, { params: { username, password } });
+            const response = await axios.get('/api/auth', { params: { username, password } });
             console.log("response: ", response.data)
             const user_data = response.data.user 
             setSuccess(true);

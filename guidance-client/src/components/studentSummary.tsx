@@ -27,7 +27,7 @@ const StudentSummary = ({ uuid, form_type, number_of_clusters = 2 }: StudentSumm
     const [selectedCluster, setSelectedCluster] = useState<number>(0);
 
     const handleSearchSubmit = () => {
-        axios.get(`${CONFIG.API_BASE_URL}/api/student/data/${uuid}/${form_type}/${search}`, {})
+    axios.get(`/api/student/data/${uuid}/${form_type}/${search}`, {})
             .then((res) => {
                 setStudent(res.data);
                 setSelectedCluster(res.data.Cluster);
@@ -44,7 +44,7 @@ const StudentSummary = ({ uuid, form_type, number_of_clusters = 2 }: StudentSumm
 
     const handleClusterChange = (cluster: number) => {
         if (!student) return;
-        axios.put(`${CONFIG.API_BASE_URL}/api/student/data/${uuid}/${form_type}/${student.Name}/${cluster}`, {})
+    axios.put(`/api/student/data/${uuid}/${form_type}/${student.Name}/${cluster}`, {})
             .then((res) => {
                 alert("Cluster updated successfully");
                 setStudent({...student, Cluster: cluster});
