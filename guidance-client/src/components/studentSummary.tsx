@@ -33,7 +33,7 @@ const StudentSummary = ({ uuid, form_type, number_of_clusters = 2 }: StudentSumm
     }
 
     const base = CONFIG.API_BASE_URL || '';
-    const encodedName = encodeURIComponent(search.trim());
+    const encodedName = search;
     const url = `${base}/api/student/data/${uuid}/${form_type}/${encodedName}`;
 
     axios.get(url, {})
@@ -61,8 +61,7 @@ const StudentSummary = ({ uuid, form_type, number_of_clusters = 2 }: StudentSumm
     const handleClusterChange = (cluster: number) => {
         if (!student) return;
     const base = CONFIG.API_BASE_URL || '';
-    const encodedName = encodeURIComponent(String(student.Name).trim());
-    const url = `${base}/api/student/data/${uuid}/${form_type}/${encodedName}/${cluster}`;
+    const url = `${base}/api/student/data/${uuid}/${form_type}/${student.Name}/${cluster}`;
     axios.put(url, {})
             .then((res) => {
                 alert("Cluster updated successfully");
