@@ -44,7 +44,7 @@ export default function HomePage() {
         if (!data) return;
         try {
             const base = CONFIG.API_BASE_URL || '';
-            const downloadUrl = `${base}/download/${data.type}/${data.id}`;
+            const downloadUrl = `${base}/api/download/${data.type}/${data.id}`;
             const response = await axios.get(downloadUrl, {
                 responseType: 'blob',
             });
