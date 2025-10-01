@@ -17,18 +17,23 @@ const LoginPage: React.FC = () => {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const router = useRouter();
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setError('');
+        if (success) return; // prevent double submit when already successful
+        setSuccess(false);
+
+        // prevent double submissions by disabling while loading
+        setIsSubmitting(true);
 
         try {
-            const response = await axios.get(
-                CONFIG.API_BASE_URL + "api/auth",
-                { params: { username, password } },
-            );
+            // Ensure URL has trailing slash if base doesn't include it
+            const url = CONFIG.API_BASE_URL.replace(/\/+$/, '') + '/api/auth';
+            const response = await axios.get(url, { params: { username, password } });
             console.log("response: ", response.data)
             const user_data = response.data.user 
             setSuccess(true);
@@ -40,16 +45,19 @@ const LoginPage: React.FC = () => {
                 user_type: user_data.user_type,
             }
             setUser(current_user);
-            alert("Login Successful!");
+            // show a friendly success notification (keep simple alert for now)
+            alert('Login successful');
             localStorage.setItem("user", JSON.stringify(current_user));
             console.log("user: ", user_data);
             router.push('/home');
         } catch (err: any) {
-            const errorData = err.response;
-            alert(errorData);
-            router.refresh();
-            console.log(err);
-            return;
+            console.error('Login error', err);
+            const errResp = err?.response?.data;
+            const msg = errResp?.message || (typeof errResp === 'string' ? errResp : null) || err.message || 'Login failed';
+            setError(String(msg));
+            // keep user on the page and allow retry
+        } finally {
+            setIsSubmitting(false);
         }
         console.log('Username:', username, 'Password:', password);
     };
@@ -87,11 +95,17 @@ const LoginPage: React.FC = () => {
                             required
                         />
                     </div>
+                    {error && (
+                        <div className="mb-4 text-sm text-red-600 bg-red-50 p-2 rounded">
+                            {error}
+                        </div>
+                    )}
                     <button
                         type="submit"
-                        className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition-colors"
+                        className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition-colors disabled:opacity-50"
+                        disabled={isSubmitting}
                     >
-                        Log In
+                        {isSubmitting ? 'Logging in...' : 'Log In'}
                     </button>
                 </form>
                 <button

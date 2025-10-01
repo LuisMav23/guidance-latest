@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  server:
+    build:
+      context: ./guidance-application
+      dockerfile: dockerfile
+    image: guidance-server:latest
+    container_name: server
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    volumes:
+      - guidance-data:/app/data
+    environment:
+      - FLASK_APP=app.py
+      - FLASK_RUN_HOST=0.0.0.0
+    networks:
+      - guidance-net
+
+  client:
+    build:
+      context: ./guidance-client
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=http://server:5000
+    image: guidance-client:latest
+    container_name: client
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      - server
+    environment:
+      - NEXT_PUBLIC_API_URL=http://server:5000
+    networks:
+      - guidance-net
+
+volumes:
+  guidance-data:
+
+networks:
+  guidance-net:
+    driver: bridge

@@ -43,20 +43,46 @@ export default function HomePage() {
     const downloadData = useCallback(async () => {
         if (!data) return;
         try {
-            const response = await axios.get(`${CONFIG.API_BASE_URL}/download/${data.type}/${data.id}`);
-            const { results_path, content } = response.data;
-            const blob = new Blob([content], { type: "text/csv;charset=utf-8;" });
+            const response = await axios.get(`${CONFIG.API_BASE_URL}/download/${data.type}/${data.id}`, {
+                responseType: 'blob',
+            });
+
+            // try to extract filename from Content-Disposition header
+            const disposition = response.headers['content-disposition'] || response.headers['Content-Disposition'];
+            let filename = `${data.type}_${data.id}.csv`;
+            if (disposition) {
+                const match = disposition.match(/filename\*?=([^;]+)(;|$)/i);
+                if (match) {
+                    filename = match[1].replace(/UTF-8''/, '').replace(/"/g, '').trim();
+                }
+            }
+
+            const blob = new Blob([response.data], { type: 'text/csv;charset=utf-8;' });
             const url = window.URL.createObjectURL(blob);
-            const a = document.createElement("a");
+            const a = document.createElement('a');
             a.href = url;
-            a.download = results_path || "download.csv";
+            a.download = filename;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
             window.URL.revokeObjectURL(url);
         } catch (error) {
-            console.error("Download error:", error);
-            alert("Failed to download file.");
+            console.error('Download error:', error);
+            if (axios.isAxiosError(error) && error.response) {
+                // Try to read server JSON error if content-type is JSON
+                try {
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        const text = String(reader.result || '');
+                        alert(`Failed to download file: ${text}`);
+                    };
+                    reader.readAsText(error.response.data);
+                } catch (e) {
+                    alert('Failed to download file.');
+                }
+            } else {
+                alert('Failed to download file.');
+            }
         }
     }, [data]);
 

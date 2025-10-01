@@ -202,14 +202,19 @@ def fetch_data():
 @app.route('/download/<string:type>/<string:uuid>', methods=['GET'])
 def download_results(type, uuid):
     """Download results file as JSON."""
-    filename = f"student_data/{type}/{uuid}.csv"
-    try:
-        with open(filename, 'r', encoding='utf-8') as txt_file:
-            content = txt_file.read()
-        result = {'results_path': filename, 'content': content}
-        return jsonify(result), 200
-    except FileNotFoundError:
+    # build a safe path to the csv file
+    dir_path = os.path.join('persisted', 'student_data', type)
+    filename = os.path.join(dir_path, f"{uuid}.csv")
+    if not os.path.exists(filename):
         abort(404, description='File not found')
+
+    # send the file as an attachment so the browser downloads it directly
+    try:
+        # send_file will set correct headers and content-type
+        return send_file(filename, mimetype='text/csv', as_attachment=True, download_name=f"{type}_{uuid}.csv")
+    except Exception as e:
+        app.logger.exception('Failed to send file')
+        abort(500, description='Failed to send file')
 
 if __name__ == '__main__':
     setup_db()
