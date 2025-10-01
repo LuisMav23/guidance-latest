@@ -200,7 +200,7 @@ def fetch_data():
     return jsonify({'message': 'File uploaded and processed successfully', 'data': results}), 200
 
 # Updated download endpoint to use student_data folder instead of persisted/student_data
-@app.route('/download/<string:type>/<string:uuid>', methods=['GET'])
+@app.route('/api/download/<string:type>/<string:uuid>', methods=['GET'])
 def download_results(type, uuid):
     """Download results file as JSON."""
     # build a safe path to the csv file
