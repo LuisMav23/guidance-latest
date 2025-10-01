@@ -274,17 +274,27 @@ def get_student_data_by_uuid_and_name(uuid, name, form_type):
         df_match = df[df['__name_norm'] == target]
         if df_match.empty:
             return None
+
         row = df_match.iloc[0]
-        return {
+        # Convert numpy types to native Python types for JSON serialization
+        def to_native(val):
+            try:
+                # If value is numpy type, convert to Python scalar
+                return int(val) if isinstance(val, (np.int64, np.int32)) else float(val) if isinstance(val, (np.float64, np.float32)) else val
+            except Exception:
+                return val
+
+        result = {
             'Name': row['Name'],
             'Grade': int(row['Grade']) if not pd.isna(row['Grade']) else None,
             'Gender': row['Gender'],
             'Cluster': int(row['Cluster']) if not pd.isna(row['Cluster']) else None,
             'Questions': {
-                col: (int(row[col]) if isinstance(row[col], (int, float)) else row[col])
+                col: to_native(row[col])
                 for col in df.columns if col not in ['Name', 'Grade', 'Gender', 'Cluster', '__name_norm']
             }
         }
+        return result
     except Exception as e:
         print("Error:", e)
         return False
