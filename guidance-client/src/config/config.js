@@ -6,7 +6,14 @@ function resolveApiBase() {
     if (typeof window !== 'undefined') {
         const proto = window.location.protocol;
         const host = window.location.hostname;
-        // Assume server listens on port 5000 on the same host where the client is accessed.
+        // If the page is served over HTTPS, use a relative path so the browser
+        // does not perform a mixed-content (http) request. In production you
+        // should proxy /api to the backend from your TLS-terminating server.
+        if (proto === 'https:') {
+            return '';
+        }
+        // Otherwise assume server listens on port 5000 on the same host where
+        // the client is accessed.
         return `${proto}//${host}:5000`;
     }
 
