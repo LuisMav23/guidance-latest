@@ -207,7 +207,6 @@ def fetch_data():
         }
     }
 
-
     results_path = upload_results(results)
     if not insert_result_record(uuid, record_name, user, form_type) or not results_path:
         abort(500, description='Failed to insert result record')
