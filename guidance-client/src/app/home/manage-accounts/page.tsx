@@ -37,7 +37,7 @@ const ManageAccounts = () => {
     try {
       setLoading(true);
       // Fetch users using axios and CONFIG.API_BASE_URL
-      const response = await axios.get(`${CONFIG.API_BASE_URL}/api/users`);
+  const response = await axios.get('/api/users');
       console.log(response.data.users);
       setUsers(response.data.users);
     } catch (err) {
@@ -81,7 +81,7 @@ const ManageAccounts = () => {
     
     try {
       // Use axios to call the API endpoint with CONFIG.API_BASE_URL
-      const response = await axios.post(`${CONFIG.API_BASE_URL}/api/create_user`, {
+  const response = await axios.post('/api/create_user', {
         username: newAdmin.username,
         password: newAdmin.password,
         first_name: newAdmin.first_name,

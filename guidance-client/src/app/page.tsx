@@ -33,6 +33,9 @@ const LoginPage: React.FC = () => {
         e.preventDefault();
         if (isSubmitting) return; // prevent double requests
         setError('');
+        if (success) return; // prevent double submit when already successful
+        setSuccess(false);
+
         setIsSubmitting(true);
 
         // abort previous request if any
@@ -41,13 +44,11 @@ const LoginPage: React.FC = () => {
         abortControllerRef.current = controller;
 
         try {
-            const response = await axios.get(
-                CONFIG.API_BASE_URL + "api/auth",
-                {
-                    params: { username, password },
-                    signal: controller.signal,
-                },
-            );
+            const apiUrl = CONFIG.API_BASE_URL ? `${CONFIG.API_BASE_URL}api/auth` : '/api/auth';
+            const response = await axios.get(apiUrl, {
+                params: { username, password },
+                signal: controller.signal,
+            });
 
             const user_data = response.data.user;
             const current_user: User = {
@@ -68,12 +69,10 @@ const LoginPage: React.FC = () => {
             if (err?.code === 'ERR_CANCELED' || err?.name === 'CanceledError') {
                 return;
             }
-            const message =
-                err?.response?.data?.message ||
-                err?.response?.data ||
-                'Login failed. Please check your credentials and try again.';
-            setError(typeof message === 'string' ? message : JSON.stringify(message));
             console.error('Login error:', err);
+            const errResp = err?.response?.data;
+            const msg = errResp?.message || (typeof errResp === 'string' ? errResp : null) || err.message || 'Login failed. Please check your credentials and try again.';
+            setError(String(msg));
         } finally {
             setIsSubmitting(false);
         }
@@ -121,6 +120,11 @@ const LoginPage: React.FC = () => {
                             disabled={isSubmitting}
                         />
                     </div>
+                    {error && (
+                        <div className="mb-4 text-sm text-red-600 bg-red-50 p-2 rounded">
+                            {error}
+                        </div>
+                    )}
                     <button
                         type="submit"
                         className={`w-full text-white py-2 rounded transition-colors ${isSubmitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600'}`}

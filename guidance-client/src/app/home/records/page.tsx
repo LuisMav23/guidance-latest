@@ -15,7 +15,7 @@ const RecordsPage: React.FC = () => {
       try {
         if (!user?.username) return;
 
-        const response = await axios.get(`${CONFIG.API_BASE_URL}/api/data`, {
+  const response = await axios.get('/api/data', {
           params: { username: user.username },
         });
 

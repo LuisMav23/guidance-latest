@@ -266,21 +266,35 @@ def delete_record(uuid):
 
 def get_student_data_by_uuid_and_name(uuid, name, form_type):
     try:
-        df = pd.read_csv(f'persisted/student_data/{form_type}/{uuid}.csv')
+        df = pd.read_csv(os.path.join('persisted', 'student_data', form_type, f'{uuid}.csv'))
         df['Name'] = df['Name'].astype(str)
-        df = df[df['Name'] == name]
-        if df.empty:
+        # Normalize comparison: strip and lower-case both sides
+        target = str(name).strip().lower()
+        df['__name_norm'] = df['Name'].astype(str).str.strip().str.lower()
+        df_match = df[df['__name_norm'] == target]
+        if df_match.empty:
             return None
-        return {
-            'Name': name,
-            'Grade': int(df['Grade'].iloc[0]),
-            'Gender': df['Gender'].iloc[0],
-            'Cluster': int(df['Cluster'].iloc[0]),
+
+        row = df_match.iloc[0]
+        # Convert numpy types to native Python types for JSON serialization
+        def to_native(val):
+            try:
+                # If value is numpy type, convert to Python scalar
+                return int(val) if isinstance(val, (np.int64, np.int32)) else float(val) if isinstance(val, (np.float64, np.float32)) else val
+            except Exception:
+                return val
+
+        result = {
+            'Name': row['Name'],
+            'Grade': int(row['Grade']) if not pd.isna(row['Grade']) else None,
+            'Gender': row['Gender'],
+            'Cluster': int(row['Cluster']) if not pd.isna(row['Cluster']) else None,
             'Questions': {
-                col: int(df[col].iloc[0]) if np.issubdtype(df[col].dtype, np.integer) else df[col].iloc[0]
-                for col in df.columns if col not in ['Name', 'Grade', 'Gender', 'Cluster']
+                col: to_native(row[col])
+                for col in df.columns if col not in ['Name', 'Grade', 'Gender', 'Cluster', '__name_norm']
             }
         }
+        return result
     except Exception as e:
         print("Error:", e)
         return False
@@ -288,10 +302,10 @@ def get_student_data_by_uuid_and_name(uuid, name, form_type):
 
 def update_student_cluster(uuid, name, cluster, form_type):
     try:
-        df = pd.read_csv(f'persisted/student_data/{form_type}/{uuid}.csv')
+        df = pd.read_csv(f'student_data/{form_type}/{uuid}.csv')
         df['Name'] = df['Name'].astype(str)
         df.loc[df['Name'] == name, 'Cluster'] = int(cluster)
-        df.to_csv(f'persisted/student_data/{form_type}/{uuid}.csv', index=False)
+        df.to_csv(f'student_data/{form_type}/{uuid}.csv', index=False)
         return True
     except Exception as e:
         print("Error:", e)
