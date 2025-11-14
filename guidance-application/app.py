@@ -202,7 +202,7 @@ def fetch_data():
 @app.route('/download/<string:type>/<string:uuid>', methods=['GET'])
 def download_results(type, uuid):
     """Download results file as JSON."""
-    filename = f"student_data/{type}/{uuid}.csv"
+    filename = f"persisted/student_data/{type}/{uuid}.csv"
     try:
         with open(filename, 'r', encoding='utf-8') as txt_file:
             content = txt_file.read()

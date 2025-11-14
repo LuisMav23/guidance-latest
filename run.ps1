@@ -20,6 +20,14 @@ if (docker ps -a --format '{{.Names}}' | Select-String -Pattern '^server$' -Quie
     docker rm server | Out-Null
 }
 
+Write-Host "Recreating docker network 'guidance-net'..."
+if (docker network ls --format '{{.Name}}' | Select-String -Pattern '^guidance-net$' -Quiet) {
+    Write-Host "Removing existing network 'guidance-net'..."
+    docker network rm guidance-net | Out-Null
+}
+Write-Host "Creating network 'guidance-net'..."
+docker network create guidance-net | Out-Null
+
 Write-Host "Starting server container..."
 docker run -d `
   --name server `

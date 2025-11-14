@@ -266,7 +266,7 @@ def delete_record(uuid):
 
 def get_student_data_by_uuid_and_name(uuid, name, form_type):
     try:
-        df = pd.read_csv(f'student_data/{form_type}/{uuid}.csv')
+        df = pd.read_csv(f'persisted/student_data/{form_type}/{uuid}.csv')
         df['Name'] = df['Name'].astype(str)
         df = df[df['Name'] == name]
         if df.empty:
@@ -288,10 +288,10 @@ def get_student_data_by_uuid_and_name(uuid, name, form_type):
 
 def update_student_cluster(uuid, name, cluster, form_type):
     try:
-        df = pd.read_csv(f'student_data/{form_type}/{uuid}.csv')
+        df = pd.read_csv(f'persisted/student_data/{form_type}/{uuid}.csv')
         df['Name'] = df['Name'].astype(str)
         df.loc[df['Name'] == name, 'Cluster'] = int(cluster)
-        df.to_csv(f'student_data/{form_type}/{uuid}.csv', index=False)
+        df.to_csv(f'persisted/student_data/{form_type}/{uuid}.csv', index=False)
         return True
     except Exception as e:
         print("Error:", e)
