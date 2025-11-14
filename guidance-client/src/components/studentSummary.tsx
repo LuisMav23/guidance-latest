@@ -16,6 +16,8 @@ interface Student {
     Grade: string;
     Gender: string;
     Cluster: number;
+    RiskRating?: string;
+    RiskConfidence?: number;
     Questions: Record<string, string>;
 }
 
@@ -131,7 +133,38 @@ const StudentSummary = ({ uuid, form_type, number_of_clusters = 2 }: StudentSumm
                                 <span className="font-medium text-gray-600">Cluster:</span>
                                 <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">{student.Cluster}</span>
                             </div>
-                            <div className="flex flex-col gap-2 mt-2">
+                            
+                            {/* Risk Rating Display */}
+                            {student.RiskRating && (
+                                <div className="flex flex-col gap-2 pt-3 border-t border-gray-200">
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-medium text-gray-600">Risk Level:</span>
+                                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                                            student.RiskRating === 'Low' ? 'bg-green-100 text-green-800' :
+                                            student.RiskRating === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
+                                            'bg-red-100 text-red-800'
+                                        }`}>
+                                            {student.RiskRating}
+                                        </span>
+                                    </div>
+                                    {student.RiskConfidence !== undefined && (
+                                        <div className="flex flex-col gap-1">
+                                            <span className="font-medium text-gray-600 text-sm">Confidence:</span>
+                                            <div className="w-full bg-gray-200 rounded-full h-2">
+                                                <div 
+                                                    className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                                                    style={{ width: `${student.RiskConfidence * 100}%` }}
+                                                ></div>
+                                            </div>
+                                            <span className="text-xs text-gray-500">
+                                                {(student.RiskConfidence * 100).toFixed(1)}%
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                            
+                            <div className="flex flex-col gap-2 mt-2 pt-3 border-t border-gray-200">
                                 <span className="font-medium text-gray-600">Change Cluster:</span>
                                 <div className="flex items-center gap-2">
                                     <select 

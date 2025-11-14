@@ -13,6 +13,9 @@ import { Cluster } from '@/models/cluster';
 import AnswerSummaryChart from '@/components/answerSummary';
 import ClassificationSummary from '@/components/classificationSummary';
 import StudentSummary from '@/components/studentSummary';
+import RiskRatingSummaryComponent from '@/components/riskRatingSummary';
+import RiskRatingChart from '@/components/riskRatingChart';
+import RiskCountCard from '@/components/riskCountCard';
 
 
 export default function HomePage() {
@@ -147,7 +150,38 @@ export default function HomePage() {
                             <RiskChart clusters={clusters} />
                             <AnswerSummaryChart data={data.data_summary.answers_summary} uuid={data.id} type={data.type} clusters={clusters}/>
                         </div>
+                        
+                        {/* Risk Rating Section */}
+                        {data.data_summary.risk_rating_summary && (
+                            <>
+                                <h2 className="text-xl font-semibold text-gray-600 mt-6">Risk Analysis</h2>
+                                
+                                {/* Risk Rating Count Cards */}
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-4">
+                                    {Object.entries(data.data_summary.risk_rating_summary.risk_distribution).map(([level, count]) => {
+                                        const total = Object.values(data.data_summary.risk_rating_summary!.risk_distribution).reduce((sum, c) => sum + c, 0);
+                                        const percentage = (count / total) * 100;
+                                        return (
+                                            <RiskCountCard 
+                                                key={level} 
+                                                level={level} 
+                                                count={count} 
+                                                percentage={percentage} 
+                                            />
+                                        );
+                                    })}
+                                </div>
+                                
+                                {/* Risk Rating Charts */}
+                                <div className="flex flex-col md:flex-row justify-starts items-start gap-4 h-fit">
+                                    <RiskRatingChart riskData={data.data_summary.risk_rating_summary} />
+                                    <RiskRatingSummaryComponent riskData={data.data_summary.risk_rating_summary} />
+                                </div>
+                            </>
+                        )}
+                        
                         <StudentSummary uuid={data.id} form_type={data.type} number_of_clusters={clusters.length} />
+                        
                         {data.data_summary.classification_summary && (
                             <ClassificationSummary 
                                 modelData={data.data_summary.classification_summary} 

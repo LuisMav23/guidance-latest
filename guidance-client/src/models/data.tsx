@@ -12,6 +12,12 @@ export interface ClassificationSummary {
     confusion_matrix: number[][];
 }
 
+export interface RiskRatingSummary {
+    model_name: string;
+    risk_distribution: Record<string, number>;
+    classes: string[];
+}
+
 export interface Data {
     id: string;
     user: string;
@@ -23,8 +29,9 @@ export interface Data {
             cluster_count: object;
         }
         pca_summary: {
-            optimal_pcs: number;
+            optimal_pc: number;
         }
         classification_summary?: ClassificationSummary;
+        risk_rating_summary?: RiskRatingSummary;
     }
 }
