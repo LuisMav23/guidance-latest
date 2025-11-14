@@ -326,11 +326,35 @@ def load_data_and_preprocess(file_path, form_type):
     # Update df to match dropped rows
     df = df.loc[df_questions_only.index].copy()
 
+    # Identify columns to exclude from scaling (non-numeric or metadata columns)
+    # Keep only question columns (Q1-Q28) and numeric metadata (Gender, GradeLevel)
+    columns_to_scale = []
+    for col in df_questions_only.columns:
+        # Include question columns (Q1, Q2, etc.)
+        if col.startswith('Q') and len(col) > 1 and col[1:].isdigit():
+            columns_to_scale.append(col)
+        # Include numeric metadata columns
+        elif col in ['Gender', 'Grade', 'GradeLevel']:
+            columns_to_scale.append(col)
+        # Skip any other columns (like RiskRating, Cluster, etc.)
+    
+    # Create a DataFrame with only numeric columns for scaling
+    df_for_scaling = df_questions_only[columns_to_scale].copy()
+    
+    # Ensure all columns are numeric
+    for col in df_for_scaling.columns:
+        df_for_scaling[col] = pd.to_numeric(df_for_scaling[col], errors='coerce')
+    
+    # Remove any rows that became NaN after conversion
+    df_for_scaling = df_for_scaling.dropna(axis=0)
+    df_questions_only = df_questions_only.loc[df_for_scaling.index].copy()
+    df = df.loc[df_for_scaling.index].copy()
+    
     # Create a scaled version for compatibility (but models will use unscaled)
     # We still return df_scaled for backward compatibility, but models use df_questions_only
     scaler = StandardScaler()
-    df_scaled = scaler.fit_transform(df_questions_only)
-    df_scaled = pd.DataFrame(df_scaled, columns=df_questions_only.columns)
+    df_scaled_values = scaler.fit_transform(df_for_scaling)
+    df_scaled = pd.DataFrame(df_scaled_values, columns=columns_to_scale, index=df_for_scaling.index)
     df_scaled['Name'] = df['Name'].values
     
     root_save_folder = 'persisted/uploads'
