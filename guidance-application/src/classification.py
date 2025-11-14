@@ -81,7 +81,7 @@ def predict_risk_rating(df: pd.DataFrame, form_type='ASSI-A') -> dict:
         df_features = df_features.rename(columns={'Grade': 'GradeLevel'})
     
     # Drop non-feature columns (Name is not used in model)
-    cols_to_drop = ['Name']
+    cols_to_drop = ['Name', 'RiskRating']  # Also drop RiskRating if present (from labeled data)
     X = df_features.drop(columns=[col for col in cols_to_drop if col in df_features.columns])
     
     # Encode Gender if needed

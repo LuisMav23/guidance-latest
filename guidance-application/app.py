@@ -171,8 +171,14 @@ def fetch_data():
         abort(400, description='Invalid dataset')
 
     # Use pre-trained models for prediction
-    df_pca, optimal_pc = pca(df_scaled)
+    # Pass both scaled (for compatibility) and unscaled (for models) data
+    df_pca, optimal_pc = pca(df_scaled, df_questions_only)
+    if df_pca is None:
+        abort(500, description='Failed to apply PCA transformation. Check that uploaded data matches expected format.')
+    
     df_pca, optimal_k, cluster_count, df_original_questions_only = kmeans(df_pca, df_questions_only)
+    if df_pca is None:
+        abort(500, description='Failed to predict clusters. Check that uploaded data matches expected format.')
     
     # Predict risk ratings using pre-trained TensorFlow model
     risk_prediction = predict_risk_rating(df, form_type)
