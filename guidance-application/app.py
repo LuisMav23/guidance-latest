@@ -163,55 +163,62 @@ def fetch_data():
     if not user:
         abort(400, description='User not found')
 
-    file_path = upload_file(file, uuid, form_type)
-    df, df_questions_only, df_scaled = load_data_and_preprocess(file_path, form_type)
-    columns = df.columns.to_list()
-    is_valid = True  # Optionally: validate_dataset(columns, form_type)
-    if not is_valid:
-        abort(400, description='Invalid dataset')
+    try:
+        file_path = upload_file(file, uuid, form_type)
+        df, df_questions_only, df_scaled = load_data_and_preprocess(file_path, form_type)
+        columns = df.columns.to_list()
+        is_valid = True  # Optionally: validate_dataset(columns, form_type)
+        if not is_valid:
+            abort(400, description='Invalid dataset')
 
-    # Use pre-trained models for prediction
-    # Pass both scaled (for compatibility) and unscaled (for models) data
-    df_pca, optimal_pc = pca(df_scaled, df_questions_only)
-    if df_pca is None:
-        abort(500, description='Failed to apply PCA transformation. Check that uploaded data matches expected format.')
-    
-    df_pca, optimal_k, cluster_count, df_original_questions_only = kmeans(df_pca, df_questions_only)
-    if df_pca is None:
-        abort(500, description='Failed to predict clusters. Check that uploaded data matches expected format.')
-    
-    # Predict risk ratings using pre-trained TensorFlow model
-    risk_prediction = predict_risk_rating(df, form_type)
-    
-    # Add risk rating predictions to the dataframe
-    df_pca['RiskRating'] = risk_prediction['predictions']
-    df_pca['RiskConfidence'] = risk_prediction['confidence']
-    
-    # Upload student data with both cluster and risk rating
-    upload_student_data(df_pca, uuid, form_type)
-    summary = summarize_answers(uuid, form_type, 'all', 'all', 'all')
+        # Use pre-trained models for prediction
+        # Pass both scaled (for compatibility) and unscaled (for models) data
+        df_pca, optimal_pc = pca(df_scaled, df_questions_only)
+        if df_pca is None:
+            abort(500, description='Failed to apply PCA transformation. Check that uploaded data matches expected format.')
+        
+        df_pca, optimal_k, cluster_count, df_original_questions_only = kmeans(df_pca, df_questions_only)
+        if df_pca is None:
+            abort(500, description='Failed to predict clusters. Check that uploaded data matches expected format.')
+        
+        # Predict risk ratings using pre-trained TensorFlow model
+        risk_prediction = predict_risk_rating(df, form_type)
+        
+        # Add risk rating predictions to the dataframe
+        df_pca['RiskRating'] = risk_prediction['predictions']
+        df_pca['RiskConfidence'] = risk_prediction['confidence']
+        
+        # Upload student data with both cluster and risk rating
+        upload_student_data(df_pca, uuid, form_type)
+        summary = summarize_answers(uuid, form_type, 'all', 'all', 'all')
 
-    results = {
-        'id': uuid,
-        'user': user,
-        'type': form_type,
-        'data_summary': {
-            'answers_summary': summary,
-            'pca_summary': {'optimal_pc': optimal_pc},
-            'cluster_summary': {'optimal_k': optimal_k, 'cluster_count': cluster_count},
-            'risk_rating_summary': {
-                'model_name': risk_prediction['model_name'],
-                'risk_distribution': risk_prediction['risk_distribution'],
-                'classes': risk_prediction['classes']
+        results = {
+            'id': uuid,
+            'user': user,
+            'type': form_type,
+            'data_summary': {
+                'answers_summary': summary,
+                'pca_summary': {'optimal_pc': optimal_pc},
+                'cluster_summary': {'optimal_k': optimal_k, 'cluster_count': cluster_count},
+                'risk_rating_summary': {
+                    'model_name': risk_prediction['model_name'],
+                    'risk_distribution': risk_prediction['risk_distribution'],
+                    'classes': risk_prediction['classes']
+                }
             }
         }
-    }
 
-    results_path = upload_results(results)
-    if not insert_result_record(uuid, record_name, user, form_type) or not results_path:
-        abort(500, description='Failed to insert result record')
+        results_path = upload_results(results)
+        if not insert_result_record(uuid, record_name, user, form_type) or not results_path:
+            abort(500, description='Failed to insert result record')
 
-    return jsonify({'message': 'File uploaded and processed successfully', 'data': results}), 200
+        return jsonify({'message': 'File uploaded and processed successfully', 'data': results}), 200
+    except ValueError as e:
+        app.logger.error(f"Data processing error: {str(e)}")
+        abort(400, description=f'Data processing error: {str(e)}')
+    except Exception as e:
+        app.logger.exception('Error processing uploaded file')
+        abort(500, description=f'Internal server error: {str(e)}')
 
 # Updated download endpoint to use student_data folder instead of persisted/student_data
 @app.route('/api/download/<string:type>/<string:uuid>', methods=['GET'])

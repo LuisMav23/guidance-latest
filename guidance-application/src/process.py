@@ -338,6 +338,10 @@ def load_data_and_preprocess(file_path, form_type):
             columns_to_scale.append(col)
         # Skip any other columns (like RiskRating, Cluster, etc.)
     
+    # Validate that we have columns to scale
+    if not columns_to_scale:
+        raise ValueError(f"No valid numeric columns found for scaling. Available columns: {list(df_questions_only.columns)}")
+    
     # Create a DataFrame with only numeric columns for scaling
     df_for_scaling = df_questions_only[columns_to_scale].copy()
     
@@ -347,6 +351,12 @@ def load_data_and_preprocess(file_path, form_type):
     
     # Remove any rows that became NaN after conversion
     df_for_scaling = df_for_scaling.dropna(axis=0)
+    
+    # Validate that we have data after conversion
+    if df_for_scaling.empty:
+        raise ValueError("No valid numeric data found after conversion. Please check that question columns contain numeric values.")
+    
+    # Update dataframes to match dropped rows
     df_questions_only = df_questions_only.loc[df_for_scaling.index].copy()
     df = df.loc[df_for_scaling.index].copy()
     
@@ -363,7 +373,7 @@ def load_data_and_preprocess(file_path, form_type):
     filename = os.path.join(root_save_folder, 'full_df.csv')
     df.to_csv(filename, index=False)
 
-    return df, df_questions_only, df_scaled, 
+    return df, df_questions_only, df_scaled 
 
 def count_items_in_cluster(df_pca, cluster):
     return df_pca[df_pca['Cluster'] == cluster].shape[0]
