@@ -15,7 +15,7 @@ from src.db import (
     test_db_connection, get_all_users, delete_user, update_student_cluster
 )
 from src.classification import (
-    svm_classification, random_forest_classification, neural_network_classification
+    predict_risk_rating
 )
 
 def get_env_var(name, default=None):
@@ -170,16 +170,20 @@ def fetch_data():
     if not is_valid:
         abort(400, description='Invalid dataset')
 
+    # Use pre-trained models for prediction
     df_pca, optimal_pc = pca(df_scaled)
     df_pca, optimal_k, cluster_count, df_original_questions_only = kmeans(df_pca, df_questions_only)
+    
+    # Predict risk ratings using pre-trained TensorFlow model
+    risk_prediction = predict_risk_rating(df, form_type)
+    
+    # Add risk rating predictions to the dataframe
+    df_pca['RiskRating'] = risk_prediction['predictions']
+    df_pca['RiskConfidence'] = risk_prediction['confidence']
+    
+    # Upload student data with both cluster and risk rating
     upload_student_data(df_pca, uuid, form_type)
     summary = summarize_answers(uuid, form_type, 'all', 'all', 'all')
-
-    # Classification
-    svm_summary = svm_classification(df_pca, 'Cluster')
-    rf_summary = random_forest_classification(df_pca, 'Cluster')
-    nn_summary = neural_network_classification(df_pca, 'Cluster')
-    best_model = max([svm_summary, rf_summary, nn_summary], key=lambda m: m['accuracy'])
 
     results = {
         'id': uuid,
@@ -189,7 +193,11 @@ def fetch_data():
             'answers_summary': summary,
             'pca_summary': {'optimal_pc': optimal_pc},
             'cluster_summary': {'optimal_k': optimal_k, 'cluster_count': cluster_count},
-            'classification_summary': best_model
+            'risk_rating_summary': {
+                'model_name': risk_prediction['model_name'],
+                'risk_distribution': risk_prediction['risk_distribution'],
+                'classes': risk_prediction['classes']
+            }
         }
     }
 

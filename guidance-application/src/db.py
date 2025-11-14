@@ -289,9 +289,11 @@ def get_student_data_by_uuid_and_name(uuid, name, form_type):
             'Grade': int(row['Grade']) if not pd.isna(row['Grade']) else None,
             'Gender': row['Gender'],
             'Cluster': int(row['Cluster']) if not pd.isna(row['Cluster']) else None,
+            'RiskRating': row.get('RiskRating', None),
+            'RiskConfidence': float(row['RiskConfidence']) if 'RiskConfidence' in row and not pd.isna(row['RiskConfidence']) else None,
             'Questions': {
                 col: to_native(row[col])
-                for col in df.columns if col not in ['Name', 'Grade', 'Gender', 'Cluster', '__name_norm']
+                for col in df.columns if col not in ['Name', 'Grade', 'Gender', 'Cluster', 'RiskRating', 'RiskConfidence', '__name_norm']
             }
         }
         return result

@@ -40,7 +40,15 @@ def upload_file(file, id, form_type):
 def upload_student_data(df, id, form_type):
     root_save_folder = 'persisted/student_data'
     df_original = pd.read_csv(f'persisted/uploads/{form_type}/{id}.csv')
-    df_original['Cluster'] = df['Cluster']
+    
+    # Add predictions from df (which contains Cluster, RiskRating, RiskConfidence)
+    df_original['Cluster'] = df['Cluster'].values
+    
+    # Add RiskRating and RiskConfidence if present
+    if 'RiskRating' in df.columns:
+        df_original['RiskRating'] = df['RiskRating'].values
+    if 'RiskConfidence' in df.columns:
+        df_original['RiskConfidence'] = df['RiskConfidence'].values
         
     if not os.path.exists(root_save_folder):
         os.makedirs(root_save_folder)
@@ -154,10 +162,17 @@ def summarize_answer_per_cluster(df_clustered, form_type):
 def load_data_and_preprocess(file_path, form_type):
     # Full DataFrame
     df = pd.read_csv(file_path)
-
     
-    # Only questions
-    df_questions_only = df.drop(columns=['Name', 'Grade'])
+    # Standardize column names - handle Grade vs GradeLevel
+    if 'Grade' in df.columns and 'GradeLevel' not in df.columns:
+        df = df.rename(columns={'Grade': 'GradeLevel'})
+    
+    # Use GradeLevel consistently
+    grade_col = 'GradeLevel' if 'GradeLevel' in df.columns else 'Grade'
+    
+    # Only questions (drop Name only - keep grade for clustering)
+    # Note: GradeLevel is used as a feature in clustering
+    df_questions_only = df.drop(columns=['Name'])
 
     if form_type == 'ASSI-C':
         # Convert 'Never', 'Sometimes', 'Often' to numerical values
@@ -176,10 +191,10 @@ def load_data_and_preprocess(file_path, form_type):
     # Scaled Only Questions
     df_scaled = scaler.fit_transform(df_questions_only)
     
-    # Scaled Full Dataframe, including Name and grade
+    # Scaled Full Dataframe, including Name 
+    # Note: GradeLevel is already in df_questions_only and thus in df_scaled
     df_scaled = pd.DataFrame(df_scaled, columns=df_questions_only.columns)
-    df_scaled['Name'] = df['Name']
-    df_scaled['Grade'] = df['Grade']
+    df_scaled['Name'] = df['Name'].values
     
     root_save_folder = 'persisted/uploads'
     if not os.path.exists(root_save_folder):
@@ -193,53 +208,140 @@ def load_data_and_preprocess(file_path, form_type):
 def count_items_in_cluster(df_pca, cluster):
     return df_pca[df_pca['Cluster'] == cluster].shape[0]
 
-def kmeans(df_pca, df_original_questions_only):
+def load_clustering_models(model_path='models/clustering'):
+    """Load pre-trained clustering models."""
+    import pickle
+    
+    print(f"Loading clustering models from {model_path}...")
+    
+    with open(os.path.join(model_path, 'clustering_models.pkl'), 'rb') as f:
+        models_dict = pickle.load(f)
+    
+    print("Clustering models loaded successfully!")
+    return models_dict
+
+
+def predict_clusters(df_scaled, df_original_questions_only):
+    """
+    Predict clusters for new data using pre-trained KMeans model.
+    
+    Args:
+        df_scaled: Scaled DataFrame with Name and Grade columns
+        df_original_questions_only: Original unscaled question data
+    
+    Returns:
+        Tuple of (df_pca with clusters, optimal_k, cluster_count, df_original with clusters)
+    """
     try:
-        # Use the Elbow Method to find the optimal number of clusters
-        distortions = []
-        K = range(1, 11)
-        for k in K:
-            kmeans = KMeans(n_clusters=k, random_state=42, n_init=10)
-            kmeans.fit(df_pca.drop(columns=['Name', 'Grade']))
-            distortions.append(kmeans.inertia_)  # Inertia is the sum of squared distances to the closest centroid
-
-        # Find the optimal number of clusters (elbow point)
-        optimal_k = np.argmax(np.diff(distortions, 2)) + 2  # Second derivative to find the elbow
+        # Load pre-trained models
+        models = load_clustering_models()
+        scaler = models['scaler']
+        pca = models['pca']
+        kmeans = models['kmeans']
+        optimal_k = models['optimal_k']
+        optimal_pc = models['optimal_pc']
         
-        # Fit KMeans with optimal number of clusters
-        kmeans = KMeans(n_clusters=optimal_k, random_state=42, n_init=10)
-        df_pca['Cluster'] = kmeans.fit_predict(df_pca.drop(columns=['Name', 'Grade']))
-
+        print(f"Using pre-trained models: {optimal_k} clusters, {optimal_pc} PCs")
+        
+        # Extract Name (GradeLevel is now part of the features, not metadata)
+        df_name = df_scaled[['Name']].copy()
+        df_scaled_questions_only = df_scaled.drop(columns=['Name'])
+        
+        # The data is already scaled from load_data_and_preprocess
+        # But we need to ensure it's scaled with the same scaler
+        # So we'll re-scale using the saved scaler
+        X_scaled = scaler.transform(df_scaled_questions_only)
+        
+        # Apply PCA transformation
+        X_pca = pca.transform(X_scaled)
+        
+        # Create DataFrame with PCA results
+        df_pca = pd.DataFrame(X_pca)
+        df_pca['Name'] = df_name['Name'].values
+        
+        # Extract grade from the original scaled data
+        if 'GradeLevel' in df_scaled.columns:
+            df_pca['Grade'] = df_scaled['GradeLevel'].values
+        elif 'Grade' in df_scaled.columns:
+            df_pca['Grade'] = df_scaled['Grade'].values
+        
+        # Predict clusters
+        clusters = kmeans.predict(X_pca)
+        df_pca['Cluster'] = clusters
+        
+        # Count items per cluster
         cluster_count = {}
-
-        # Calculate the number of items in each cluster
         for cluster in range(optimal_k):
-            cluster_count["Cluster " + str(cluster + 1)] = count_items_in_cluster(df_pca, cluster)
+            cluster_count[f"Cluster {cluster + 1}"] = count_items_in_cluster(df_pca, cluster)
         
+        # Add cluster labels to original data
         df_original_questions_only['Cluster'] = df_pca['Cluster'].apply(lambda x: f'cluster_{x+1}')
-        optimal_k = int(optimal_k)
+        
+        print(f"Cluster prediction complete. Distribution: {cluster_count}")
+        
         return df_pca, optimal_k, cluster_count, df_original_questions_only
 
     except Exception as e:
-        print(f"Error in kmeans: {e}")
+        print(f"Error in predict_clusters: {e}")
+        import traceback
+        traceback.print_exc()
+        return None, None, None, None
+
+
+# Keep old kmeans function for backward compatibility (can be removed later)
+def kmeans(df_pca, df_original_questions_only):
+    """Deprecated: Use predict_clusters instead."""
+    print("Warning: kmeans() is deprecated. Using predict_clusters() instead.")
+    return predict_clusters(df_pca, df_original_questions_only)
+
+
+def apply_pca(df_scaled):
+    """
+    Apply PCA transformation using pre-trained model.
+    
+    Note: This function is kept for compatibility but predict_clusters() 
+    handles both PCA and clustering together.
+    """
+    try:
+        # Load pre-trained models
+        models = load_clustering_models()
+        scaler = models['scaler']
+        pca = models['pca']
+        optimal_pc = models['optimal_pc']
+        
+        # Extract Name (GradeLevel is part of features now)
+        df_name = df_scaled[['Name']].copy()
+        df_scaled_questions_only = df_scaled.drop(columns=['Name'])
+        
+        # Re-scale using the saved scaler
+        X_scaled = scaler.transform(df_scaled_questions_only)
+        
+        # Apply PCA
+        principal_components = pca.transform(X_scaled)
+        
+        # Create DataFrame
+        df_pca = pd.DataFrame(principal_components)
+        df_pca['Name'] = df_name['Name'].values
+        
+        # Extract grade from original scaled data
+        if 'GradeLevel' in df_scaled.columns:
+            df_pca['Grade'] = df_scaled['GradeLevel'].values
+        elif 'Grade' in df_scaled.columns:
+            df_pca['Grade'] = df_scaled['Grade'].values
+        
+        return df_pca, int(optimal_pc)
+    
+    except Exception as e:
+        print(f"Error in apply_pca: {e}")
+        import traceback
+        traceback.print_exc()
         return None, None
 
 
+# Keep old pca function for backward compatibility
 def pca(df_scaled):
-        pca = PCA()
-        optimal_pc = None
-        df_name_grade = df_scaled[['Name', 'Grade']]
-        df_scaled_questions_only = df_scaled.drop(columns=['Name', 'Grade'])
-        pca.fit(df_scaled_questions_only)
-        eigenvalues = pca.explained_variance_
-        optimal_pc = np.sum(eigenvalues > 1)
-        pca = PCA(n_components=optimal_pc)
-        principal_components = pca.fit_transform(df_scaled_questions_only)
-        df_pca = pd.DataFrame(principal_components)
-        df_pca['Name'] = df_name_grade['Name']
-        df_pca['Grade'] = df_name_grade['Grade']
-
-        return df_pca, int(optimal_pc)
+    """Deprecated: Use apply_pca instead."""
+    return apply_pca(df_scaled)
 
 def get_uploaded_result_by_uuid(id, type):
     root_save_folder = 'persisted/results'
