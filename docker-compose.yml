@@ -15,12 +15,6 @@ services:
     environment:
       - FLASK_APP=app.py
       - FLASK_RUN_HOST=0.0.0.0
-    networks:
-      - guidance-net
 
 volumes:
   guidance-data:
-
-networks:
-  guidance-net:
-    driver: bridge

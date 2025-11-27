@@ -17,7 +17,6 @@ Write-Host "Starting server container..."
 docker run -d `
   --name server `
   --restart=unless-stopped `
-  --network guidance-net `
   -p 5000:5000 `
   -v guidance-data:/app/data `
   server | Out-Null

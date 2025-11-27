@@ -15,9 +15,3 @@ if (-not (docker volume ls --format '{{.Name}}' | Select-String -Pattern '^guida
     Write-Host "Creating docker volume 'guidance-data'..."
     docker volume create guidance-data | Out-Null
 }
-
-# Create docker network if it doesn't exist
-if (-not (docker network ls --format '{{.Name}}' | Select-String -Pattern '^guidance-net$' -Quiet)) {
-    Write-Host "Creating docker network 'guidance-net'..."
-    docker network create guidance-net | Out-Null
-}
