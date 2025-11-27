@@ -8,11 +8,6 @@ if [ "$(uname -s)" = "Linux" ]; then
   IS_LINUX=1
 fi
 
-if docker ps -a --format '{{.Names}}' | grep -Eq '^client$'; then
-    docker stop client
-    docker rm client
-fi
-
 if docker ps -a --format '{{.Names}}' | grep -Eq '^server$'; then
     docker stop server
     docker rm server
@@ -34,22 +29,6 @@ else
     -p 5000:5000 \
     -v guidance-data:/app/data \
     server
-fi
-
-if [ "${USE_HOST_NETWORK}" = "1" ] && [ "${IS_LINUX}" = "1" ]; then
-  echo "Starting client with host networking (containers share host network namespace)"
-  docker run -d \
-    --name client \
-    --restart=unless-stopped \
-    --network host \
-    client:latest
-else
-  docker run -d \
-    --name client \
-    --restart=unless-stopped \
-    --network guidance-net \
-    -p 3000:3000 \
-    client:latest
 fi
 
 if [ "${USE_HOST_NETWORK}" = "1" ] && [ "${IS_LINUX}" != "1" ]; then

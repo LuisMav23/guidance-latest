@@ -4,12 +4,6 @@ $ErrorActionPreference = 'Stop'
 # Run from script directory when available
 if ($PSScriptRoot) { Set-Location -Path $PSScriptRoot }
 
-Write-Host "Building client image..."
-Set-Location -Path "guidance-client"
-docker build -t client .
-
-Set-Location -Path ..
-
 Write-Host "Building server image..."
 Set-Location -Path "guidance-application"
 docker build -t server .
